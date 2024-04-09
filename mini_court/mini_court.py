@@ -8,7 +8,7 @@ from utils import convert_meters_to_pixel_distance, convert_pixel_distance_to_me
 class MiniCourt():
     def __init__(self, frame):
         self.drawing_rectangle_width = 250
-        self.drawing_rectangle_height = 450
+        self.drawing_rectangle_height = 500
         self.buffer = 50
         self.padding_court = 20
         
@@ -77,7 +77,8 @@ class MiniCourt():
             (8,9),
             (10,11),
             (10,11),
-            (2,3)
+            (2,3),
+            (12, 13)
 
         ]
 
@@ -109,9 +110,38 @@ class MiniCourt():
         out[mask] = cv2.addWeighted(frame, alpha, shapes, 1 - alpha, 0 )[mask]
         return out
     
+    def draw_court(self, frame):
+        for i in range(0, len(self.drawing_kps), 2):
+            x = int(self.drawing_kps[i])
+            y = int(self.drawing_kps[i+1])
+            cv2.circle(frame, (x, y), 5, (0, 0, 255), -1)
+        
+        # Draw lines
+        for line in self.lines:
+            start_point = (int(self.drawing_kps[line[0]*2]), int(self.drawing_kps[line[0]*2+1]))
+            end_point = (int(self.drawing_kps[line[1]*2]), int(self.drawing_kps[line[1]*2+1]))
+            cv2.line(frame, start_point, end_point, (0,0,0), 2)
+
+        # Draw net
+        net_start_point = (self.drawing_kps[0], int((self.drawing_kps[1] + self.drawing_kps[5]) / 2))
+        net_end_point = (self.drawing_kps[2], int((self.drawing_kps[1] + self.drawing_kps[5]) / 2))
+        cv2.line(frame, net_start_point, net_end_point, (255,0,0), 2)
+
+        return frame
+    
     def draw_mini_court(self, frames):
         output_frames = []
         for frame in frames:
             frame = self.draw_background_rectangle(frame)
+            frame = self.draw_court(frame)
             output_frames.append(frame)
         return output_frames
+
+    def get_start_point_of_mini_court(self):
+        return (self.court_start_x, self.court_start_y)
+    
+    def get_width_of_mini_court(self):
+        return self.court_drawing_width
+
+    def get_court_drawing_kps(self):
+        return self.drawing_kps
